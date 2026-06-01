@@ -31,10 +31,12 @@ def build_cnn_model(
 
     for filters in conv_filters:
         model.add(tf.keras.layers.Conv2D(filters, (3, 3), activation="relu", padding="same"))
+        model.add(tf.keras.layers.Conv2D(filters, (3, 3), activation="relu", padding="same"))
+        model.add(tf.keras.layers.Conv2D(filters, (3, 3), activation="relu", padding="same"))
         model.add(tf.keras.layers.MaxPooling2D((2, 2)))
 
-    # model.add(tf.keras.layers.GlobalAveragePooling2D())
-    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.GlobalMaxPooling2D())
+
     for units in dense_units:
         model.add(tf.keras.layers.Dense(units, activation="relu"))
         if dropout_rate > 0:
