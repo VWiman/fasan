@@ -1,0 +1,30 @@
+# ============================================================
+# 1. MODELL OCH NUMERISK BERÄKNING
+# ============================================================
+#
+# TensorFlow används för kommande CNN-modell. NumPy används för bildarrayer,
+# batchar och enklare numeriska kontroller.
+
+tensorflow==2.18.1
+numpy==2.0.2
+scikit-learn==1.8.0
+
+
+# ============================================================
+# 2. BILDER OCH GRAFER
+# ============================================================
+#
+# Pillow används för att läsa bilder. Matplotlib används för EDA- och
+# utvärderingsgrafer.
+
+pillow==12.2.0
+matplotlib==3.10.9
+
+
+# ============================================================
+# 3. TESTER
+# ============================================================
+#
+# Pytest används för att validera dataladdning, datarensning och grafer.
+
+pytest==9.0.3

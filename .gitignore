@@ -1,0 +1,9 @@
+test/*
+train/*
+valid/*
+dataset/*
+output/*
+.DS_Store
+__pycache__/
+.pytest_cache/
+.matplotlib_cache/
