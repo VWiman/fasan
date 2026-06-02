@@ -1,6 +1,7 @@
 from clean_data import clean_data, print_clean_report
-from config import APPLY_DATA_CLEANING, CREATE_EDA_IN_PIPELINE, DATASET_PATH, EDA_OUTPUT_DIR, EDA_SAMPLE_COUNT
+from config import APPLY_DATA_CLEANING, CREATE_EDA_IN_PIPELINE, DATASET_PATH, EDA_OUTPUT_DIR, EDA_SAMPLE_COUNT, GRAD_CAM_OUTPUT_DIR, GRAD_CAM_SAMPLE_COUNT
 from eda import create_eda_graphs
+from grad_cam import evaluate_grad_cam_iou, save_grad_cam_report, save_grad_cam_samples
 from load_data import calculate_class_weights, load_data, make_batches, print_dataset_summary
 from model import build_cnn_model
 import tensorflow as tf
@@ -184,6 +185,46 @@ def main():
 
     print(f"Träningshistorik sparades: {history_path}")
     print(f"Confusion matrix sparades: {confusion_matrix_path}")
+
+# ============================================================
+# 8. GRAD-CAM OCH IOU
+# ============================================================
+#
+# Grad-CAM genererar en värmekarta som visar var i bilden modellen
+# fokuserade. Värmekartan tröskas till en bounding box som sedan
+# jämförs med YOLO-koordinaterna via IoU. Steget körs bara på positiva
+# testbilder (etikett 1) eftersom det inte finns någon referensbox att
+# jämföra med för bilder utan människa.
+
+    # ------------------------------------------------------------
+    # 8.1 Beräkna IoU för testdata
+    # ------------------------------------------------------------
+    grad_cam_eval = evaluate_grad_cam_iou(model, test_data)
+
+    print("\nGrad-CAM IoU-utvärdering")
+    print(f"Utvärderade bilder: {grad_cam_eval['total']}")
+    print(f"Genomsnittligt IoU: {grad_cam_eval['mean_iou']:.4f}")
+    print(f"Detektionsandel:    {grad_cam_eval['detection_rate']:.2%}")
+
+    # ------------------------------------------------------------
+    # 8.2 Spara rapport
+    # ------------------------------------------------------------
+    grad_cam_report_path = save_grad_cam_report(grad_cam_eval)
+    print(f"Grad-CAM rapport sparades: {grad_cam_report_path}")
+
+    # ------------------------------------------------------------
+    # 8.3 Spara exempelbilder med värmekarta och bounding boxes
+    # ------------------------------------------------------------
+    grad_cam_sample_paths = save_grad_cam_samples(
+        model,
+        test_data,
+        output_dir=GRAD_CAM_OUTPUT_DIR,
+        sample_count=GRAD_CAM_SAMPLE_COUNT,
+    )
+
+    print(f"Grad-CAM exempelbilder sparades: {len(grad_cam_sample_paths)} filer")
+    for path in grad_cam_sample_paths:
+        print(f"  {path}")
 
 if __name__ == "__main__":
     main()

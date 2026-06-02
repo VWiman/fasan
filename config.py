@@ -139,9 +139,26 @@ CLASSIFICATION_REPORT_FILE_NAME = "classification_report.txt"
 # CLEAN_IMAGE_DIRS och CLEAN_IMAGE_PATTERNS används för att även ta bort sparade
 # bildfiler från output-mapparna, till exempel grafer från EDA.
 
+# ============================================================
+# 11. GRAD-CAM OCH IOU
+# ============================================================
+#
+# GRAD_CAM_THRESHOLD styr hur stor andel av värmekartans maxvärde som behöver
+# överskridas för att en pixel ska räknas som aktiverad när CAM-bbox beräknas.
+# GRAD_CAM_IOU_THRESHOLD styr hur hög IoU som krävs för att en bild ska räknas
+# som korrekt lokaliserad i rapporten.
+
+GRAD_CAM_OUTPUT_DIR = OUTPUT_DIR / "grad_cam"
+GRAD_CAM_THRESHOLD = 0.5
+GRAD_CAM_IOU_THRESHOLD = 0.3
+GRAD_CAM_SAMPLE_COUNT = 6
+GRAD_CAM_REPORT_FILE_NAME = "grad_cam_iou_report.txt"
+
+
 CLEAN_TARGETS = [
     CHECKPOINT_OUTPUT_DIR,
     TRAINING_OUTPUT_DIR,
+    GRAD_CAM_OUTPUT_DIR,
 ]
 
 CLEAN_IMAGE_DIRS = [
