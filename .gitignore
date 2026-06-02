@@ -7,3 +7,4 @@ output/*
 __pycache__/
 .pytest_cache/
 .matplotlib_cache/
+saved_best/*
