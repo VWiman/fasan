@@ -8,3 +8,4 @@ __pycache__/
 .pytest_cache/
 .matplotlib_cache/
 saved_best/*
+dataset_safe/*
