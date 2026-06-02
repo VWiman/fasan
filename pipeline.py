@@ -202,8 +202,11 @@ def main():
     grad_cam_eval = evaluate_grad_cam_iou(model, test_data)
 
     print("\nGrad-CAM IoU-utvärdering")
+    print(f"Positiva bilder: {grad_cam_eval['positive_total']}")
     print(f"Utvärderade bilder: {grad_cam_eval['total']}")
+    print(f"Överhoppade utan YOLO-boxar: {grad_cam_eval['skipped_without_boxes']}")
     print(f"Genomsnittligt IoU: {grad_cam_eval['mean_iou']:.4f}")
+    print(f"Korrekt lokaliserade: {grad_cam_eval['detected_count']}")
     print(f"Detektionsandel:    {grad_cam_eval['detection_rate']:.2%}")
 
     # ------------------------------------------------------------

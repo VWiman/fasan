@@ -42,14 +42,10 @@ def get_last_conv_layer_name(model):
 # 1.2 Beräkna Grad-CAM värmekarta
 # ------------------------------------------------------------
 def compute_grad_cam(model, image_array, layer_name=None):
-    """
-    image_array: (H, W, 3) float32, normaliserad 0-1
-    Returnerar: värmekarta (h, w) normaliserad 0-1, samma storlek som feature map
-
-    Notering: Sequential-modeller i Keras 3 exponerar inte model.output som
-    symbolisk tensor. Istället körs ett manuellt forward pass genom lagren så
-    att conv-utdata kan bevakas av GradientTape direkt.
-    """
+    # image_array är en normaliserad RGB-bild med formen (H, W, 3). Funktionen
+    # returnerar en värmekarta i intervallet 0-1 med samma storlek som feature map.
+    # Sequential-modeller i Keras 3 exponerar inte alltid model.output som
+    # symbolisk tensor, därför görs ett manuellt forward pass genom lagren.
     if layer_name is None:
         layer_name = get_last_conv_layer_name(model)
 
@@ -65,14 +61,14 @@ def compute_grad_cam(model, image_array, layer_name=None):
                 conv_outputs = x
                 tape.watch(conv_outputs)
 
-        loss = x[:, 0]  # sigmoid-utdata, sista lagret
+        loss = x[:, 0]
 
-    grads = tape.gradient(loss, conv_outputs)          # (1, h, w, C)
-    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))  # (C,)
+    grads = tape.gradient(loss, conv_outputs)
+    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
 
-    conv_out = conv_outputs[0]                         # (h, w, C)
-    heatmap = conv_out @ pooled_grads[..., tf.newaxis] # (h, w, 1)
-    heatmap = tf.squeeze(heatmap).numpy()              # (h, w)
+    conv_out = conv_outputs[0]
+    heatmap = conv_out @ pooled_grads[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap).numpy()
 
     heatmap = np.maximum(heatmap, 0)
 
@@ -92,10 +88,8 @@ def compute_grad_cam(model, image_array, layer_name=None):
 # direkt med YOLO-koordinater.
 
 def cam_bbox_from_heatmap(heatmap, threshold=GRAD_CAM_THRESHOLD):
-    """
-    heatmap: (h, w) normaliserad 0-1
-    Returnerar: (x1, y1, x2, y2) normaliserade 0-1, eller None om inget aktiverat.
-    """
+    # Returnerar (x1, y1, x2, y2) normaliserade till 0-1, eller None om inget
+    # område i värmekartan passerar tröskeln.
     binary = (heatmap >= threshold).astype(np.uint8)
     rows = np.any(binary, axis=1)
     cols = np.any(binary, axis=0)
@@ -118,10 +112,8 @@ def cam_bbox_from_heatmap(heatmap, threshold=GRAD_CAM_THRESHOLD):
 # Dessa konverteras till hörn (x1 y1 x2 y2) för IoU-beräkning.
 
 def read_yolo_boxes(label_path):
-    """
-    Läser alla bounding boxes från en YOLO-etikettfil.
-    Returnerar lista av (x1, y1, x2, y2) normaliserade 0-1.
-    """
+    # Förenklade binära etiketter utan koordinater ignoreras här eftersom IoU
+    # bara kan beräknas när det finns riktiga YOLO-boxar.
     text = Path(label_path).read_text().strip()
 
     if not text:
@@ -150,10 +142,7 @@ def read_yolo_boxes(label_path):
 # överlappar med en referensbox. Värden nära 1 betyder god matchning.
 
 def compute_iou(box_a, box_b):
-    """
-    box_a, box_b: (x1, y1, x2, y2) normaliserade
-    Returnerar: IoU-värde 0-1
-    """
+    # box_a och box_b anges som (x1, y1, x2, y2), normaliserade till 0-1.
     ix1 = max(box_a[0], box_b[0])
     iy1 = max(box_a[1], box_b[1])
     ix2 = min(box_a[2], box_b[2])
@@ -174,7 +163,7 @@ def compute_iou(box_a, box_b):
 
 
 def max_iou_against_gt(pred_box, gt_boxes):
-    """Bästa IoU mellan pred_box och alla gt_boxes."""
+    # Bästa IoU mellan pred_box och alla ground-truth-boxar.
     if not gt_boxes or pred_box is None:
         return 0.0
     return max(compute_iou(pred_box, gt) for gt in gt_boxes)
@@ -189,7 +178,7 @@ def max_iou_against_gt(pred_box, gt_boxes):
 # En bild räknas som korrekt lokaliserad om IoU >= iou_threshold.
 
 def _get_label_path_for_image(image_path):
-    """Bygger sökväg till etikettfil utifrån bildens sökväg."""
+    # Bygger sökväg till etikettfil utifrån bildens sökväg.
     label_dir = image_path.parent.parent / "labels"
     return label_dir / f"{image_path.stem}.txt"
 
@@ -201,15 +190,9 @@ def evaluate_grad_cam_iou(
     cam_threshold=GRAD_CAM_THRESHOLD,
     iou_threshold=GRAD_CAM_IOU_THRESHOLD,
 ):
-    """
-    Utvärderar hur väl Grad-CAM lokaliserar människor i positiva bilder.
-
-    Returnerar dict med:
-        results: lista med per-bild-resultat
-        mean_iou: genomsnittligt IoU
-        detection_rate: andel bilder med IoU >= iou_threshold
-        total: antal utvärderade bilder
-    """
+    # Utvärderar hur väl Grad-CAM lokaliserar människor i positiva bilder.
+    # Bilder utan YOLO-boxar hoppas över eftersom IoU inte kan beräknas utan
+    # referensposition.
     if layer_name is None:
         layer_name = get_last_conv_layer_name(model)
 
@@ -220,10 +203,15 @@ def evaluate_grad_cam_iou(
     ]
 
     results = []
+    skipped_without_boxes = 0
 
     for image_path, label in tqdm(positive_pairs, desc="Grad-CAM IoU", unit="bild"):
         label_path = _get_label_path_for_image(image_path)
         gt_boxes = read_yolo_boxes(label_path) if label_path.exists() else []
+
+        if not gt_boxes:
+            skipped_without_boxes += 1
+            continue
 
         image = load_image(image_path, split_data.image_size)
         heatmap = compute_grad_cam(model, image, layer_name)
@@ -238,12 +226,19 @@ def evaluate_grad_cam_iou(
             "gt_boxes": gt_boxes,
         })
 
+    detected_count = int(sum(r["detected"] for r in results))
+
     if not results:
         return {
             "results": results,
             "mean_iou": 0.0,
             "detection_rate": 0.0,
             "total": 0,
+            "positive_total": len(positive_pairs),
+            "skipped_without_boxes": skipped_without_boxes,
+            "detected_count": 0,
+            "missed_count": 0,
+            "layer_name": layer_name,
         }
 
     iou_values = [r["iou"] for r in results]
@@ -253,12 +248,20 @@ def evaluate_grad_cam_iou(
         "mean_iou": float(np.mean(iou_values)),
         "detection_rate": float(np.mean([r["detected"] for r in results])),
         "total": len(results),
+        "positive_total": len(positive_pairs),
+        "skipped_without_boxes": skipped_without_boxes,
+        "detected_count": detected_count,
+        "missed_count": len(results) - detected_count,
+        "layer_name": layer_name,
     }
 
 
 # ============================================================
 # 6. SPARA RAPPORT
 # ============================================================
+#
+# Rapporten sparar både sammanfattning och per-bild-resultat. Bilder som saknar
+# YOLO-boxar redovisas separat eftersom de inte kan användas för IoU.
 
 def save_grad_cam_report(
     eval_results,
@@ -276,15 +279,20 @@ def save_grad_cam_report(
     lines = [
         "Grad-CAM IoU-rapport",
         "=" * 50,
-        f"Utvärderade bilder (etikett=human): {eval_results['total']}",
+        f"Positiva bilder:                     {eval_results.get('positive_total', eval_results['total'])}",
+        f"Utvärderade bilder med YOLO-boxar:   {eval_results['total']}",
+        f"Överhoppade utan YOLO-boxar:         {eval_results.get('skipped_without_boxes', 0)}",
+        f"Grad-CAM-lager:                      {eval_results.get('layer_name', 'okänt')}",
         f"Genomsnittligt IoU:                  {eval_results['mean_iou']:.4f}",
+        f"Korrekt lokaliserade:                {eval_results.get('detected_count', 0)}",
+        f"Missade lokaliseringar:              {eval_results.get('missed_count', 0)}",
         f"Detektionsandel (IoU >= {iou_threshold:.2f}):      {eval_results['detection_rate']:.2%}",
         "",
         "Per-bild-resultat:",
     ]
 
     for r in eval_results["results"]:
-        status = "OK " if r["detected"] else "MEJ"
+        status = "OK " if r["detected"] else "NEJ"
         lines.append(f"  [{status}] {r['image_path'].name}  IoU={r['iou']:.4f}")
 
     report_path.write_text("\n".join(lines), encoding="utf-8")
@@ -323,18 +331,24 @@ def save_grad_cam_visualization(
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
-    # Panel 1: originalbild
+    # ------------------------------------------------------------
+    # 7.1 Rita originalbild
+    # ------------------------------------------------------------
     axes[0].imshow(image)
     axes[0].set_title("Original")
     axes[0].axis("off")
 
-    # Panel 2: Grad-CAM overlay
+    # ------------------------------------------------------------
+    # 7.2 Rita Grad-CAM-overlay
+    # ------------------------------------------------------------
     axes[1].imshow(image)
     axes[1].imshow(heatmap_resized, alpha=0.5, cmap="jet", vmin=0, vmax=1)
     axes[1].set_title("Grad-CAM")
     axes[1].axis("off")
 
-    # Panel 3: bounding boxes
+    # ------------------------------------------------------------
+    # 7.3 Rita bounding boxes
+    # ------------------------------------------------------------
     axes[2].imshow(image)
     for box in gt_boxes:
         x1, y1, x2, y2 = box
@@ -373,6 +387,9 @@ def save_grad_cam_visualization(
 # ============================================================
 # 8. SPARA EXEMPELBILDER
 # ============================================================
+#
+# Exempelbilder sparas bara för positiva bilder som har YOLO-boxar. Förenklade
+# positiva labels utan koordinater kan inte visualisera ground truth-boxar.
 
 def save_grad_cam_samples(
     model,
@@ -385,10 +402,12 @@ def save_grad_cam_samples(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    positive_indices = [
-        i for i, label in enumerate(split_data.labels) if label == 1
+    positive_indices_with_boxes = [
+        i
+        for i, label in enumerate(split_data.labels)
+        if label == 1 and read_yolo_boxes(_get_label_path_for_image(split_data.image_paths[i]))
     ]
-    sample_indices = positive_indices[:sample_count]
+    sample_indices = positive_indices_with_boxes[:sample_count]
 
     saved_paths = []
 

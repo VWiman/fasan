@@ -90,7 +90,7 @@ MIN_LEARNING_RATE = 5e-6
 #
 # CNN_CONV_FILTERS styr hur många convolution-lager modellen får och hur många
 # filter varje lager använder. CNN_DENSE_UNITS styr dense-lager efter
-# GlobalAveragePooling2D. Dessa listor gör modellen enkel att justera utan att
+# modellens pooling-lager. Dessa listor gör modellen enkel att justera utan att
 # ändra själva modellfunktionen.
 
 CNN_CONV_FILTERS = [32, 64, 128]
@@ -129,18 +129,7 @@ CLASSIFICATION_REPORT_FILE_NAME = "classification_report.txt"
 
 
 # ============================================================
-# 10. RENSNING AV TRÄNINGSARTEFAKTER
-# ============================================================
-#
-# CLEAN_TARGETS anger vilka filer eller mappar som tas bort när clean.py körs.
-# Datasetet ska inte ligga här. Standard är att rensa modell-checkpoints och
-# träningsresultat från tidigare körningar.
-#
-# CLEAN_IMAGE_DIRS och CLEAN_IMAGE_PATTERNS används för att även ta bort sparade
-# bildfiler från output-mapparna, till exempel grafer från EDA.
-
-# ============================================================
-# 11. GRAD-CAM OCH IOU
+# 10. GRAD-CAM OCH IOU
 # ============================================================
 #
 # GRAD_CAM_THRESHOLD styr hur stor andel av värmekartans maxvärde som behöver
@@ -154,6 +143,17 @@ GRAD_CAM_IOU_THRESHOLD = 0.3
 GRAD_CAM_SAMPLE_COUNT = 6
 GRAD_CAM_REPORT_FILE_NAME = "grad_cam_iou_report.txt"
 
+
+# ============================================================
+# 11. RENSNING AV TRÄNINGSARTEFAKTER
+# ============================================================
+#
+# CLEAN_TARGETS anger vilka filer eller mappar som tas bort när clean.py körs.
+# Datasetet ska inte ligga här. Standard är att rensa modell-checkpoints och
+# träningsresultat från tidigare körningar.
+#
+# CLEAN_IMAGE_DIRS och CLEAN_IMAGE_PATTERNS används för att även ta bort sparade
+# bildfiler från output-mapparna, till exempel grafer från EDA.
 
 CLEAN_TARGETS = [
     CHECKPOINT_OUTPUT_DIR,
