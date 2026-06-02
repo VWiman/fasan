@@ -5,6 +5,12 @@ import tensorflow as tf
 from sklearn.metrics import classification_report
 
 from config import (
+    AUGMENT_BRIGHTNESS_FACTOR,
+    AUGMENT_CONTRAST_FACTOR,
+    AUGMENT_HORIZONTAL_FLIP,
+    AUGMENT_HUE_FACTOR,
+    AUGMENT_ROTATION_FACTOR,
+    AUGMENT_SATURATION_FACTOR,
     CHECKPOINT_OUTPUT_DIR,
     CLASSIFICATION_REPORT_FILE_NAME,
     CLASS_NAMES,
@@ -20,6 +26,7 @@ from config import (
     SHUFFLE_TRAINING_DATA,
     TRAINING_HISTORY_FILE_NAME,
     TRAINING_OUTPUT_DIR,
+    USE_DATA_AUGMENTATION,
     USE_EARLY_STOPPING,
     USE_REDUCE_LR_ON_PLATEAU,
 )
@@ -34,18 +41,24 @@ from load_data import load_image
 # Keras behöver kunna läsa flera epoker från samma dataset. En Sequence skapar
 # batcher på begäran och kan därför återanvändas genom hela träningen utan att
 # alla bilder behöver ligga i minnet samtidigt. Träningsdata kan blandas mellan
-# epoker så att modellen inte lär sig en fast filordning.
+# epoker och augmenteras, medan validation och test alltid lämnas oförändrade.
 
 # ------------------------------------------------------------
 # 1.1 Skapa Keras-sequence
 # ------------------------------------------------------------
 class ImageSequence(tf.keras.utils.Sequence):
-    def __init__(self, split_data, shuffle=False, seed=RANDOM_SEED, **kwargs):
+    def __init__(self, split_data, shuffle=False, augment=False, seed=RANDOM_SEED, **kwargs):
         super().__init__(**kwargs)
         self.split_data = split_data
         self.shuffle = shuffle
+        self.augment = augment
         self.rng = np.random.default_rng(seed)
         self.indexes = np.arange(self.split_data.samples)
+        self.rotation_layer = tf.keras.layers.RandomRotation(
+            AUGMENT_ROTATION_FACTOR,
+            fill_mode="nearest",
+            seed=seed,
+        )
         self.on_epoch_end()
 
     def __len__(self):
@@ -65,11 +78,49 @@ class ImageSequence(tf.keras.utils.Sequence):
             image_batch.append(load_image(image_path, self.split_data.image_size))
             label_batch.append(label)
 
-        return np.array(image_batch, dtype=np.float32), np.array(label_batch, dtype=np.float32)
+        image_batch = np.array(image_batch, dtype=np.float32)
+
+        if self.augment:
+            image_batch = self.augment_images(image_batch)
+
+        return image_batch, np.array(label_batch, dtype=np.float32)
 
     def on_epoch_end(self):
         if self.shuffle:
             self.rng.shuffle(self.indexes)
+
+    def augment_images(self, image_batch):
+        image_batch = tf.convert_to_tensor(image_batch, dtype=tf.float32)
+
+        if AUGMENT_HORIZONTAL_FLIP:
+            image_batch = tf.image.random_flip_left_right(image_batch)
+
+        if AUGMENT_ROTATION_FACTOR > 0:
+            image_batch = self.rotation_layer(image_batch, training=True)
+
+        if AUGMENT_BRIGHTNESS_FACTOR > 0:
+            image_batch = tf.image.random_brightness(image_batch, max_delta=AUGMENT_BRIGHTNESS_FACTOR)
+
+        if AUGMENT_CONTRAST_FACTOR > 0:
+            image_batch = tf.image.random_contrast(
+                image_batch,
+                lower=1 - AUGMENT_CONTRAST_FACTOR,
+                upper=1 + AUGMENT_CONTRAST_FACTOR,
+            )
+
+        if AUGMENT_HUE_FACTOR > 0:
+            image_batch = tf.image.random_hue(image_batch, max_delta=AUGMENT_HUE_FACTOR)
+
+        if AUGMENT_SATURATION_FACTOR > 0:
+            image_batch = tf.image.random_saturation(
+                image_batch,
+                lower=1 - AUGMENT_SATURATION_FACTOR,
+                upper=1 + AUGMENT_SATURATION_FACTOR,
+            )
+
+        image_batch = tf.clip_by_value(image_batch, 0.0, 1.0)
+
+        return image_batch.numpy().astype(np.float32)
 
 
 # ============================================================
@@ -135,8 +186,12 @@ def create_training_callbacks():
 # 3.2 Kör träning
 # ------------------------------------------------------------
 def train_cnn_model(model, train_data, valid_data, class_weights, epochs=EPOCHS):
-    train_sequence = ImageSequence(train_data, shuffle=SHUFFLE_TRAINING_DATA)
-    valid_sequence = ImageSequence(valid_data, shuffle=False)
+    train_sequence = ImageSequence(
+        train_data,
+        shuffle=SHUFFLE_TRAINING_DATA,
+        augment=USE_DATA_AUGMENTATION,
+    )
+    valid_sequence = ImageSequence(valid_data, shuffle=False, augment=False)
     callbacks = create_training_callbacks()
 
     history = model.fit(

@@ -93,8 +93,8 @@ MIN_LEARNING_RATE = 5e-6
 # GlobalAveragePooling2D. Dessa listor gör modellen enkel att justera utan att
 # ändra själva modellfunktionen.
 
-CNN_CONV_FILTERS = [16, 32, 64, 128]
-CNN_DENSE_UNITS = [128, 128]
+CNN_CONV_FILTERS = [32, 64, 128]
+CNN_DENSE_UNITS = [256, 128]
 CNN_DROPOUT_RATE = 0.50
 
 
@@ -109,10 +109,10 @@ CNN_DROPOUT_RATE = 0.50
 USE_DATA_AUGMENTATION = True
 AUGMENT_HORIZONTAL_FLIP = True
 AUGMENT_ROTATION_FACTOR = 0.05
-AUGMENT_ZOOM_FACTOR = 0
 AUGMENT_CONTRAST_FACTOR = 0.10
 AUGMENT_BRIGHTNESS_FACTOR = 0.10
 AUGMENT_HUE_FACTOR = 0.03
+AUGMENT_SATURATION_FACTOR = 0.10
 
 
 # ============================================================

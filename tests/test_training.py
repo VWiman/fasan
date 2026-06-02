@@ -1,4 +1,5 @@
 import numpy as np
+import config
 
 from load_data import load_data
 from training import (
@@ -9,6 +10,7 @@ from training import (
     get_best_epoch,
     predict_classes,
     save_classification_report,
+    train_cnn_model,
 )
 
 
@@ -46,6 +48,48 @@ def test_image_sequence_can_shuffle_between_epochs(tiny_dataset):
 
     assert sorted(sequence.indexes.tolist()) == [0, 1, 2]
     assert sequence.indexes.tolist() != first_order.tolist()
+
+
+# ------------------------------------------------------------
+# 1.3 Augmentera träningsbatch
+# ------------------------------------------------------------
+def test_image_sequence_can_augment_training_batches(tiny_dataset):
+    train_data, _, _ = load_data(tiny_dataset, image_size=(32, 32), batch_size=2)
+    sequence = ImageSequence(train_data, augment=True)
+    images, labels = sequence[0]
+
+    assert images.shape == (2, 32, 32, 3)
+    assert labels.shape == (2,)
+    assert images.dtype == np.float32
+    assert np.max(images) <= 1.0
+    assert np.min(images) >= 0.0
+
+
+# ------------------------------------------------------------
+# 1.4 Använd augmentation bara på train
+# ------------------------------------------------------------
+def test_train_cnn_model_only_augments_training_sequence(tiny_dataset):
+    train_data, valid_data, _ = load_data(tiny_dataset, image_size=(32, 32), batch_size=2)
+    captured_sequences = {}
+
+    class DummyModel:
+        def fit(self, train_sequence, validation_data, epochs, class_weight, callbacks):
+            captured_sequences["train"] = train_sequence
+            captured_sequences["valid"] = validation_data
+            return {"loss": [0.5], "val_loss": [0.6]}
+
+    train_cnn_model(DummyModel(), train_data, valid_data, class_weights=None, epochs=1)
+
+    assert captured_sequences["train"].augment is config.USE_DATA_AUGMENTATION
+    assert captured_sequences["valid"].augment is False
+
+
+# ------------------------------------------------------------
+# 1.5 Kontrollera augmentation-inställningar
+# ------------------------------------------------------------
+def test_augmentation_config_removes_zoom_and_adds_saturation():
+    assert not hasattr(config, "AUGMENT_ZOOM_FACTOR")
+    assert hasattr(config, "AUGMENT_SATURATION_FACTOR")
 
 
 # ============================================================

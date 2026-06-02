@@ -30,10 +30,7 @@ def test_build_cnn_model_reduces_feature_maps_before_output():
 
     layer_types = [type(layer) for layer in model.layers]
 
-    assert (
-        tf.keras.layers.GlobalAveragePooling2D in layer_types
-        or tf.keras.layers.Flatten in layer_types
-    )
+    assert tf.keras.layers.GlobalMaxPooling2D in layer_types
 
 
 # ------------------------------------------------------------
@@ -52,7 +49,7 @@ def test_build_cnn_model_accepts_custom_layer_settings():
     dense_layers = [layer for layer in model.layers if isinstance(layer, tf.keras.layers.Dense)]
     dropout_layers = [layer for layer in model.layers if isinstance(layer, tf.keras.layers.Dropout)]
 
-    assert [layer.filters for layer in conv_layers] == [8, 16]
+    assert [layer.filters for layer in conv_layers] == [8, 8, 16, 16]
     assert [layer.units for layer in dense_layers] == [32, 16, 1]
     assert dropout_layers[0].rate == 0.25
     assert model.output_shape == (None, 1)
