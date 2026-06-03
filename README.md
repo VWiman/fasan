@@ -32,7 +32,7 @@ Vid nästkommande körning önskades en Yolo-liknande modell som också skulle p
 **Slutsats:**
 Genom att använda koordinater som "facit" under träning lyckades vi lära modellen att se människor mycket bättre än med den ursprungliga baslinjen.
 
-### Justeringar:
+## Justeringar:
 *   Lokaliseringsträning var det enskilt viktigaste steget för att tvinga modellen att lära sig se objektet "människa" korrekt.
 *   Focal Loss i kombination med tröskelvärdesjustering gav den bästa balansen för praktisk tillämpning i Search and Rescue, där hög Human Recall är prioriterat utan att dränkas i falsklarm.
 
@@ -49,9 +49,9 @@ Genom att använda koordinater som "facit" under träning lyckades vi lära mode
 
 
 **Slutlig reflektion:**
-Att utforska lokalisering och avancerade loss-funktioner var en mycket intressant väg. När vi jämför den slutgiltiga modellen med vår ursprungliga version kan vi konstatera att förbättringarna var marginella, vilket tyder på att den ursprungliga arkitekturen redan var väl anpassad för uppgiften.
+Att utforska lokalisering och avancerade loss-funktioner var en mycket intressant väg. När vi jämför den slutgiltiga utforskade modellen med vår ursprungliga version kan vi konstatera att förbättringarna var marginella, vilket tyder på att den ursprungliga arkitekturen redan var väl anpassad för uppgiften.
 
-Resultat för den slutgiltiga modellen:
+Resultat för den ursprungliga modellen:
 
                   precision    recall  f1-score   support
 
