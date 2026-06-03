@@ -1,0 +1,10 @@
+Classification report
+
+              precision    recall  f1-score   support
+
+    no human       0.61      0.81      0.70        84
+       human       0.97      0.91      0.94       486
+
+    accuracy                           0.90       570
+   macro avg       0.79      0.86      0.82       570
+weighted avg       0.91      0.90      0.90       570
