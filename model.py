@@ -39,7 +39,8 @@ def build_cnn_model(
     model.add(tf.keras.layers.GlobalMaxPooling2D())
 
     for units in dense_units:
-        model.add(tf.keras.layers.Dense(units, activation="relu"))
+        model.add(tf.keras.layers.Dense(units, activation="relu",
+                  kernel_regularizer=tf.keras.regularizers.L2(1e-4)))
         if dropout_rate > 0:
             model.add(tf.keras.layers.Dropout(dropout_rate))
 

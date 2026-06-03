@@ -29,4 +29,4 @@ tqdm==4.67.3
 # Pytest används för att validera dataladdning, datarensning och grafer.
 
 pytest==9.0.3
-tqdm
+tqdm==4.67.3

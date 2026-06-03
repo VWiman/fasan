@@ -32,7 +32,7 @@ REMOVED_DIR = "_removed"
 # IMAGE_SIZE styr vilken storlek bilderna får när de laddas in. BATCH_SIZE styr
 # hur många bilder som skickas vidare åt gången i batch-generatorn.
 
-IMAGE_SIZE = (320, 320)
+IMAGE_SIZE = (640, 640)
 BATCH_SIZE = 8
 
 
@@ -77,7 +77,7 @@ SHUFFLE_TRAINING_DATA = True
 RANDOM_SEED = 42
 CLASS_WEIGHT_MODE = "balanced"
 USE_EARLY_STOPPING = True
-EARLY_STOPPING_PATIENCE = 4
+EARLY_STOPPING_PATIENCE = 3
 USE_REDUCE_LR_ON_PLATEAU = True
 REDUCE_LR_FACTOR = 0.5
 REDUCE_LR_PATIENCE = 2
@@ -93,8 +93,8 @@ MIN_LEARNING_RATE = 5e-6
 # modellens pooling-lager. Dessa listor gör modellen enkel att justera utan att
 # ändra själva modellfunktionen.
 
-CNN_CONV_FILTERS = [32, 64, 128]
-CNN_DENSE_UNITS = [128, 128]
+CNN_CONV_FILTERS = [32, 64, 128, 256]
+CNN_DENSE_UNITS = [256, 256]
 CNN_DROPOUT_RATE = 0.25
 
 
