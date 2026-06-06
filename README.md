@@ -1,8 +1,8 @@
 # FASAN — Fältbaserad AI för Sökning Av Nödställda
 
-Ett binärt CNN som avgör om det finns en människa i en flygbild eller inte. Projektet är byggt åt ett tänkt uppdrag för Försvarsmakten: att hitta nödställda personer i terräng, oavsett om de syns tydligt eller är delvis dolda. Prioriteringen är hög *recall* — hellre ett falsklarm än en missad människa.
+Ett binärt CNN som avgör om det finns en människa i en flygbild eller inte. Projektet är byggt som ett påhittat uppdrag: att hitta nödställda personer i terräng, oavsett om de syns tydligt eller är delvis dolda. Prioriteringen är hög *recall* — hellre ett falsklarm än en missad människa.
 
-Skapat som grupparbete (Grupp 08) i kursen *Tillämpad AI: maskininlärning och deep learning*.
+Skapat som grupparbete i kursen *Tillämpad AI: maskininlärning och deep learning*.
 
 ## Innehåll
 
